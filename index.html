@@ -299,6 +299,56 @@
       .digital-grid { grid-template-columns:1fr 1fr; }
       .stats-grid { grid-template-columns:1fr; }
     }
+
+    /* ===== PAINEL DE NOTIFICAÇÕES ===== */
+    #notifPanel {
+      display:none; position:fixed; top:0; right:0; width:min(360px,100vw);
+      height:100vh; background:white; z-index:2000;
+      box-shadow:-4px 0 30px rgba(0,0,0,0.2); flex-direction:column;
+      overflow:hidden;
+    }
+    #notifPanel.open { display:flex; }
+    .notif-header {
+      background:linear-gradient(135deg,#1e3a8a,#1e40af);
+      color:white; padding:16px 20px;
+      display:flex; align-items:center; gap:10px;
+    }
+    .notif-header h3 { flex:1; font-size:16px; font-weight:700; }
+    .notif-list { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px; }
+    .notif-empty { text-align:center; padding:40px 20px; color:#94a3b8; }
+    .notif-card {
+      border-radius:14px; border:1.5px solid #e2e8f0; padding:14px;
+      background:#fff; cursor:pointer; transition:all .15s;
+      position:relative;
+    }
+    .notif-card.novo { border-color:#22c55e; background:#f0fdf4; }
+    .notif-card:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    .notif-card .nc-badge {
+      display:inline-block; padding:2px 8px; border-radius:20px;
+      font-size:10px; font-weight:700; text-transform:uppercase;
+      background:#dcfce7; color:#16a34a; margin-bottom:6px;
+    }
+    .notif-card.pago .nc-badge { background:#dbeafe; color:#1d4ed8; }
+    .notif-card .nc-produto { font-size:15px; font-weight:700; color:#1e293b; margin-bottom:4px; }
+    .notif-card .nc-preco { font-size:20px; font-weight:800; color:#16a34a; }
+    .notif-card .nc-info { font-size:12px; color:#64748b; margin-top:6px; line-height:1.6; }
+    .notif-card .nc-entrega {
+      display:inline-block; background:#eff6ff; color:#1d4ed8;
+      border-radius:6px; padding:3px 8px; font-size:11px; font-weight:600; margin-top:6px;
+    }
+    .notif-card .nc-ack {
+      margin-top:10px; width:100%; background:#1e3a8a; color:white;
+      border:none; border-radius:8px; padding:8px; font-size:12px;
+      font-weight:700; cursor:pointer;
+    }
+    .notif-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1999; }
+    .notif-overlay.open { display:block; }
+
+    @keyframes bellShake {
+      0%,100%{transform:rotate(0)} 20%{transform:rotate(-20deg)} 40%{transform:rotate(20deg)}
+      60%{transform:rotate(-15deg)} 80%{transform:rotate(15deg)}
+    }
+    .bell-shake { animation: bellShake .6s ease 3; }
   </style>
 </head>
 <body>
@@ -314,8 +364,12 @@
       </div>
       <div class="header-right">
         <a id="adminLink" href="#">⚙️ Admin</a>
-        <button id="authBtn" onclick="handleAuth()">
-          <span id="authBtnText">🔑 Entrar</span>
+        <button id="notifBtn" onclick="toggleNotifPanel()" style="display:none;position:relative;background:none;border:none;color:white;font-size:20px;cursor:pointer;padding:4px 8px;margin-left:4px" title="Pedidos">
+          🔔<span id="notifBadge" style="display:none;position:absolute;top:0;right:0;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:700;line-height:16px;text-align:center">0</span>
+        </button>
+        <button id="authBtn" onclick="handleAuth()" title="Entrar com Google">
+          <svg id="googleIcon" width="15" height="15" viewBox="0 0 24 24" style="flex-shrink:0;vertical-align:middle"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          <span id="authBtnText"> Entrar</span>
         </button>
       </div>
     </div>
@@ -438,7 +492,7 @@
 
 <footer>
   <p>© 2025 Banca da Matriz · Planaltina DF</p>
-  <p style="margin-top:6px"><a href="https://wa.me/5561984611071">WhatsApp: (61) 98461-1071</a></p>
+  <p style="margin-top:6px"><a href="https://wa.me/5561984611071?text=Olá!%20Preciso%20de%20suporte." style="display:inline-flex;align-items:center;gap:6px;color:#25d366;font-weight:600;text-decoration:none">💬 Falar com suporte no WhatsApp</a></p>
 </footer>
 
 <!-- MODAL DETALHE / CHECKOUT -->
@@ -647,52 +701,122 @@ function openCheckoutPeca(id) {
 }
 
 function showCheckoutStep1(product, tipo) {
+  // Recuperar dados salvos do localStorage
+  const savedPhone = localStorage.getItem('bm_phone') || '';
+  const savedEmail = localStorage.getItem('bm_email') || currentUser?.email || '';
+
   document.getElementById('modalBody').innerHTML = `
     <div class="checkout-steps">
       <div class="step active">1 Contato</div>
       <div class="step">2 Pagamento</div>
       <div class="step">3 Entrega</div>
     </div>
-    <p style="font-size:14px;color:#64748b;margin-bottom:16px">
-      Para finalizar sua compra, informe seu contato:
-    </p>
+    <p style="font-size:13px;color:#64748b;margin-bottom:14px">Para finalizar sua compra, informe seu contato:</p>
     <div class="contact-form">
-      <input type="tel" id="custPhone" placeholder="WhatsApp (ex: 61999999999)"
-        value="${currentUser ? '' : ''}" >
-      <input type="email" id="custEmail" placeholder="Seu e-mail"
-        value="${currentUser?.email || ''}">
+      <div style="position:relative">
+        <input type="tel" id="custPhone" placeholder="WhatsApp (ex: 61999999999)" value="${savedPhone}"
+          style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;outline:none" oninput="this.style.borderColor='#1e40af'">
+      </div>
+      <div style="position:relative;margin-top:10px">
+        <input type="email" id="custEmail" placeholder="Seu e-mail" value="${savedEmail}"
+          style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;outline:none" oninput="this.style.borderColor='#1e40af'">
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <p style="font-size:12px;font-weight:700;color:#475569;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Como quer receber?</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label id="opt-entrega" onclick="selectEntrega('entrega')" style="cursor:pointer;border:2px solid #1e40af;border-radius:10px;padding:12px 10px;text-align:center;background:#eff6ff">
+          <div style="font-size:22px">🛵</div>
+          <div style="font-size:13px;font-weight:700;color:#1e40af;margin-top:4px">Entrega</div>
+          <div style="font-size:10px;color:#64748b">Combinamos pelo WhatsApp</div>
+        </label>
+        <label id="opt-retirada" onclick="selectEntrega('retirada')" style="cursor:pointer;border:2px solid #e2e8f0;border-radius:10px;padding:12px 10px;text-align:center;background:#fff">
+          <div style="font-size:22px">🏪</div>
+          <div style="font-size:13px;font-weight:700;color:#475569;margin-top:4px">Retirada</div>
+          <div style="font-size:10px;color:#64748b">Planaltina DF</div>
+        </label>
+      </div>
     </div>
   `;
+
+  window._tipoEntrega = 'entrega';
+
   document.getElementById('modalFooter').innerHTML = `
-    <button class="btn-buy" style="width:100%" onclick="proceedToPayment('${product.id}','${tipo}')">
+    <button class="btn-buy" style="width:100%;margin-bottom:8px" onclick="proceedToPayment('${product.id}','${tipo}')">
       Continuar para pagamento →
     </button>
+    <button onclick="desistirCompra()" style="width:100%;background:none;border:none;color:#94a3b8;font-size:12px;cursor:pointer;padding:4px">
+      Desistir da compra
+    </button>
   `;
+}
+
+function selectEntrega(tipo) {
+  window._tipoEntrega = tipo;
+  const e = document.getElementById('opt-entrega');
+  const r = document.getElementById('opt-retirada');
+  if (tipo === 'entrega') {
+    e.style.border = '2px solid #1e40af'; e.style.background = '#eff6ff';
+    e.querySelector('div:nth-child(2)').style.color = '#1e40af';
+    r.style.border = '2px solid #e2e8f0'; r.style.background = '#fff';
+    r.querySelector('div:nth-child(2)').style.color = '#475569';
+  } else {
+    r.style.border = '2px solid #1e40af'; r.style.background = '#eff6ff';
+    r.querySelector('div:nth-child(2)').style.color = '#1e40af';
+    e.style.border = '2px solid #e2e8f0'; e.style.background = '#fff';
+    e.querySelector('div:nth-child(2)').style.color = '#475569';
+  }
+}
+
+function desistirCompra() {
+  closeModal();
+  const msg = encodeURIComponent('Olá! Estava fazendo um pedido no site mas desisti. Quero entender melhor antes de comprar.');
+  window.open('https://wa.me/' + WPP + '?text=' + msg, '_blank');
 }
 
 function proceedToPayment(prodId, tipo) {
   const phone = document.getElementById('custPhone').value.trim();
   const email = document.getElementById('custEmail').value.trim();
   if (!phone || !email) { showToast('Preencha WhatsApp e e-mail!'); return; }
+  // Salvar para próxima compra
+  localStorage.setItem('bm_phone', phone);
+  localStorage.setItem('bm_email', email);
 
   const p = tipo === 'peca' ? PRODUCTS[prodId] : digitalProducts.find(d=>d.id===prodId);
   if (!p) return;
 
   // Salvar pedido no Firestore
+  const tipoEntrega = window._tipoEntrega || 'entrega';
   const order = {
     productId: prodId,
-    productName: p.name,
+    productName: p.name || p.title,
     productType: tipo,
     price: p.price,
     custPhone: phone,
     custEmail: email,
+    tipoEntrega: tipoEntrega,
     userId: currentUser?.uid || null,
     status: 'aguardando_pagamento',
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
   db.collection('orders').add(order).then(ref => {
-    // Criar preferência no Mercado Pago via função
+    // Notificar admin via webhook (iFood-style)
+    const entregaIcon = tipoEntrega === 'retirada' ? '🏪 Retirada' : '🛵 Entrega';
+    fetch('/api/notify-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: ref.id,
+        productName: p.name || p.title,
+        price: p.price,
+        custPhone: phone,
+        custEmail: email,
+        tipoEntrega: entregaIcon
+      })
+    }).catch(() => {}); // Silencioso — não bloqueia o checkout
+
     createMPPreference(ref.id, p, phone, email);
   });
 }
@@ -755,11 +879,10 @@ async function createMPPreference(orderId, product, phone, email) {
           </div>
         `;
         document.getElementById('modalFooter').innerHTML = `
-          <a href="https://wa.me/${WPP}?text=${msg}" target="_blank"
-             class="btn-wpp" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:6px">
-            📲 Enviar comprovante pelo WhatsApp
-          </a>
-          <p style="text-align:center;font-size:11px;color:#94a3b8">Após pagar, envie o comprovante para receber seu produto</p>
+          <div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center">
+            <p style="font-size:13px;font-weight:700;color:#16a34a;margin-bottom:4px">✅ Pague o Pix acima</p>
+            <p style="font-size:12px;color:#64748b">Seu pedido será confirmado automaticamente após o pagamento.<br>Em caso de dúvida, <a href="https://wa.me/${WPP}?text=Olá!%20Preciso%20de%20ajuda%20com%20meu%20pedido." target="_blank" style="color:#25d366;font-weight:700;text-decoration:none">fale conosco no WhatsApp</a>.</p>
+          </div>
         `;
       }
     }
@@ -792,11 +915,10 @@ async function createMPPreference(orderId, product, phone, email) {
       </div>
     `;
     document.getElementById('modalFooter').innerHTML = `
-      <a href="https://wa.me/${WPP}?text=${msg}" target="_blank"
-         class="btn-wpp" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:6px">
-        📲 Confirmar pagamento pelo WhatsApp
-      </a>
-      <p style="text-align:center;font-size:11px;color:#94a3b8">Após o Pix, envie o comprovante para liberar seu produto</p>
+      <div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center">
+        <p style="font-size:13px;font-weight:700;color:#16a34a;margin-bottom:4px">✅ Pague o Pix acima</p>
+        <p style="font-size:12px;color:#64748b">Seu pedido será confirmado após o pagamento.<br>Em caso de dúvida, <a href="https://wa.me/${WPP}?text=Olá!%20Preciso%20de%20ajuda%20com%20meu%20pedido." target="_blank" style="color:#25d366;font-weight:700;text-decoration:none">fale conosco no WhatsApp</a>.</p>
+      </div>
     `;
   }
 }
@@ -962,9 +1084,123 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+// ===== NOTIFICAÇÕES DE PEDIDOS (iFood-style) =====
+let notifUnsubscribe = null;
+
+function initNotifications() {
+  if (!currentUser || (userRole !== 'owner' && userRole !== 'admin')) return;
+
+  document.getElementById('notifBtn').style.display = 'inline-block';
+
+  // Listener em tempo real no Firestore
+  notifUnsubscribe = db.collection('notifications')
+    .orderBy('createdAt', 'desc')
+    .limit(30)
+    .onSnapshot(snap => {
+      const novas = snap.docs.filter(d => !d.data().lida);
+      const total = novas.length;
+
+      const badge = document.getElementById('notifBadge');
+      const btn = document.getElementById('notifBtn');
+
+      if (total > 0) {
+        badge.style.display = 'block';
+        badge.textContent = total > 9 ? '9+' : total;
+        btn.classList.add('bell-shake');
+        setTimeout(() => btn.classList.remove('bell-shake'), 2000);
+      } else {
+        badge.style.display = 'none';
+      }
+
+      renderNotifList(snap.docs);
+    });
+}
+
+function renderNotifList(docs) {
+  const list = document.getElementById('notifList');
+  if (!docs.length) {
+    list.innerHTML = '<div class="notif-empty"><div style="font-size:40px;margin-bottom:8px">📭</div><p>Nenhum pedido ainda</p></div>';
+    return;
+  }
+
+  list.innerHTML = docs.map(doc => {
+    const d = doc.data();
+    const isNovo = !d.lida;
+    const priceStr = parseFloat(d.price || 0).toFixed(2).replace('.', ',');
+    const statusLabel = d.status === 'pago' ? '✅ Pago' : '⏳ Aguardando Pix';
+    const badgeClass = d.status === 'pago' ? 'pago' : '';
+    return `
+      <div class="notif-card ${isNovo ? 'novo' : ''} ${badgeClass}" id="nc-${doc.id}">
+        <div class="nc-badge">${isNovo ? '🆕 Novo pedido' : statusLabel}</div>
+        <div class="nc-produto">${d.productName || 'Produto'}</div>
+        <div class="nc-preco">R$ ${priceStr}</div>
+        <div class="nc-info">
+          📲 ${d.custPhone || '-'}<br>
+          📧 ${d.custEmail || '-'}<br>
+          🕐 ${d.createdAt || '-'}
+        </div>
+        <div class="nc-entrega">${d.tipoEntrega || '🛵 Entrega'}</div>
+        ${isNovo ? `<button class="nc-ack" onclick="marcarLida('${doc.id}', event)">✓ Marcar como visto</button>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleNotifPanel() {
+  const panel = document.getElementById('notifPanel');
+  const overlay = document.getElementById('notifOverlay');
+  panel.classList.toggle('open');
+  overlay.classList.toggle('open');
+}
+
+function marcarLida(docId, e) {
+  if (e) e.stopPropagation();
+  db.collection('notifications').doc(docId).update({ lida: true });
+}
+
+function marcarTodasLidas() {
+  db.collection('notifications').where('lida', '==', false).get().then(snap => {
+    const batch = db.batch();
+    snap.docs.forEach(d => batch.update(d.ref, { lida: true }));
+    batch.commit();
+  });
+}
+
+// Ativar notificações quando o usuário logar
+auth.onAuthStateChanged(user => {
+  if (user && notifUnsubscribe === null) {
+    setTimeout(initNotifications, 500);
+  } else if (!user && notifUnsubscribe) {
+    notifUnsubscribe();
+    notifUnsubscribe = null;
+    document.getElementById('notifBtn').style.display = 'none';
+  }
+});
+
 // Carregar digital
 loadDigital();
 </script>
+
+<!-- OVERLAY NOTIFICAÇÕES -->
+<div class="notif-overlay" id="notifOverlay" onclick="toggleNotifPanel()"></div>
+
+<!-- PAINEL DE NOTIFICAÇÕES (estilo iFood) -->
+<div id="notifPanel">
+  <div class="notif-header">
+    <span style="font-size:22px">🛒</span>
+    <h3>Pedidos</h3>
+    <button onclick="marcarTodasLidas()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">
+      ✓ Marcar todas como lidas
+    </button>
+    <button onclick="toggleNotifPanel()" style="background:none;border:none;color:white;font-size:22px;cursor:pointer;margin-left:6px">×</button>
+  </div>
+  <div class="notif-list" id="notifList">
+    <div class="notif-empty">
+      <div style="font-size:40px;margin-bottom:8px">📭</div>
+      <p>Nenhum pedido ainda</p>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
