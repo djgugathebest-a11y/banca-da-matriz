@@ -812,8 +812,8 @@ function showCheckoutStep1(product, tipo) {
     <button class="btn-buy" style="width:100%;margin-bottom:8px" onclick="proceedToPayment('${product.id}','${tipo}')">
       Continuar para pagamento →
     </button>
-    <button onclick="desistirCompra()" style="width:100%;background:none;border:none;color:#94a3b8;font-size:12px;cursor:pointer;padding:4px">
-      Desistir da compra
+    <button onclick="maisInfoProduto('${product.id}','${product.name || product.title}')" style="width:100%;background:none;border:none;color:#25d366;font-size:13px;font-weight:600;cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;gap:5px">
+      💬 Mais informações sobre o produto
     </button>
   `;
 }
@@ -838,6 +838,13 @@ function selectEntrega(tipo) {
 function desistirCompra() {
   closeModal();
   const msg = encodeURIComponent('Olá! Estava fazendo um pedido no site mas desisti. Quero entender melhor antes de comprar.');
+  window.open('https://wa.me/' + WPP + '?text=' + msg, '_blank');
+}
+
+function maisInfoProduto(prodId, prodName) {
+  closeModal();
+  const nome = prodName || prodId;
+  const msg = encodeURIComponent('Olá! Tenho interesse no produto *' + nome + '* que vi no site. Pode me dar mais informações?');
   window.open('https://wa.me/' + WPP + '?text=' + msg, '_blank');
 }
 
